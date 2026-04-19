@@ -2,6 +2,8 @@ const fs = require('fs');
 const http = require('http');
 const url = require('url');
 
+const slugify = require('slugify');
+
 const replaceTemplate = require('./modules/replaceTemplate');
 
 /////////////////////////////////////////
@@ -38,7 +40,12 @@ const tempCard = fs.readFileSync(`${__dirname}/templates/card.html`, 'utf-8');
 const tempProduct = fs.readFileSync(`${__dirname}/templates/product.html`, 'utf-8');
 
 const data = fs.readFileSync(`${__dirname}/dev-data/data.json`, 'utf-8');
-const dataObj = JSON.parse(data);
+const dataObj = JSON.parse(data).map(el => {
+    return {
+        ...el,
+        slug: slugify(el.productName, { lower: true })
+    };
+}); // Create a slug for each product based on its name, to be used in the URL
 
 const server = http.createServer((req, res) => {
     const {query, pathname} = url.parse(req.url, true);
@@ -53,9 +60,17 @@ const server = http.createServer((req, res) => {
         res.end(output);
     
     // Product page
-    } else if(pathname === '/product') {
+    } else if(pathname.startsWith('/product/')) { // Verifies if the URL starts with /product/ to identify the product to be displayed
         res.writeHead(200, { 'Content-type': 'text/html' });
-        const product = dataObj[query.id];
+
+        const slug = pathname.split('/')[2]; // Extracts the slug from the URL (e.g., /product/fresh-avocados -> fresh-avocados)
+        const product = dataObj.find(el => el.slug === slug); // Finds the product corresponding to the extracted slug
+
+        if (!product) {
+            res.writeHead(404, { 'Content-type': 'text/html' });
+            return res.end('<h1>Product not found!</h1>');
+        } // If no product is found with the given slug, return a 404 error
+
         const output = replaceTemplate(tempProduct, product);
 
         res.end(output);

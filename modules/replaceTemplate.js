@@ -7,6 +7,7 @@ module.exports = (temp, product) => {
     output = output.replace(/{%PRODUCT_PRICE%}/g, product.price);
     output = output.replace(/{%PRODUCT_DESCRIPTION%}/g, product.description);
     output = output.replace(/{%PRODUCT_ID%}/g, product.id);
+    output = output.replace(/{%PRODUCT_SLUG%}/g, product.slug);
 
     if(!product.organic) output = output.replace(/{%PRODUCT_ORGANIC%}/g, 'not-organic' );
     return output;
